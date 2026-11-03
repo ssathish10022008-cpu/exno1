@@ -20,7 +20,62 @@ STEP 5: Remove outliers using IQR
 
 STEP 6: Use zscore of to remove outliers
 
+
 # Coding and Output
-            <<include your coding and its corressponding output screen shots here>>
+```
+
+import pandas as pd
+import numpy as np
+from scipy import stats
+import matplotlib.pyplot as plt
+
+df = pd.read_csv("Loan_data.csv")
+
+print(df.head())           # First 5 rows
+print(df.shape)            # Rows, columns
+print(df.info())           # Data types
+print(df.isnull().sum())   # Missing values
+print(df.duplicated().sum()) # Duplicates
+df = df.drop_duplicates()
+
+# Numerical columns → median
+for col in df.select_dtypes(include="number").columns:
+    df[col] = df[col].fillna(df[col].median())
+
+# Text columns → most common value (mode)
+for col in df.select_dtypes(include="object").columns:
+    if df[col].isnull().any() and not df[col].mode().empty:
+        df[col] = df[col].fillna(df[col].mode()[0])
+
+print(df.isnull().sum())
+col = "ApplicantIncome"  # change if needed
+
+Q1 = df[col].quantile(0.25)
+Q3 = df[col].quantile(0.75)
+IQR = Q3 - Q1
+
+lower = Q1 - 1.5 * IQR
+upper = Q3 + 1.5 * IQR
+
+outliers = df[(df[col] < lower) |
+              (df[col] > upper)]
+print(outliers[[col]])
+
+plt.boxplot(df[col].dropna())
+plt.title("Possible outliers")
+plt.show()
+col = "ApplicantIncome"  # numeric column
+
+z = np.abs(stats.zscore(
+    df[col], nan_policy="omit"
+))
+
+outliers = df[z > 3]
+print(outliers[[col]])
+
+# Save the cleaned dataset
+df.to_csv("cleaned_data.csv", index=False)
+print("Saved successfully!")
+```
 # Result
-          <<include your Result here>>
+[ds exp 1.pdf](https://github.com/user-attachments/files/33959573/ds.exp.1.pdf)
